@@ -17,24 +17,39 @@ const Header = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const isProtectedRoute =
+    location.pathname.startsWith("/dashboard") ||
+    location.pathname.startsWith("/scores") ||
+    location.pathname.startsWith("/subscription") ||
+    location.pathname.startsWith("/winnings") ||
+    location.pathname.startsWith("/admin");
+
   useEffect(() => {
+    if (!isProtectedRoute) {
+      setUser(null);
+      return;
+    }
+
     const getUser = async () => {
       try {
         const response = await fetch(`${API_URL}/api/auth/me`, {
           credentials: "include"
         });
 
-        if (response.ok) {
-          const data = await response.json();
-          setUser(data);
+        if (!response.ok) {
+          setUser(null);
+          return;
         }
+
+        const data = await response.json();
+        setUser(data);
       } catch {
         setUser(null);
       }
     };
 
     getUser();
-  }, [location.pathname]);
+  }, [isProtectedRoute, location.pathname]);
 
   const logout = async () => {
     try {
