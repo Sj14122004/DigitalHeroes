@@ -55,8 +55,12 @@ app.use("/api/draws", drawRoute);
 
 app.use(errorHandler);
 
-const PORT = Number(process.env.PORT) || 5000;
+export default app;
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+if (!process.env.VERCEL) {
+  const PORT = Number(process.env.PORT) || 5000;
+
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
