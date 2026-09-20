@@ -1,0 +1,224 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String             @id @default(uuid())
+  name          String
+  email         String             @unique
+  password      String
+  role          Role               @default(USER)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  charities     CharitySelection[]
+  drawEntries   DrawEntry[]
+  scores        GolfScore[]
+  payments      Payment[]
+  subscriptions Subscription[]
+  winners       Winner[]
+}
+
+model Subscription {
+  id                   String             @id @default(uuid())
+  userId               String
+  plan                 SubscriptionPlan
+  status               SubscriptionStatus @default(ACTIVE)
+  amount               Decimal            @db.Decimal(10, 2)
+  charityPercentage    Int                @default(10)
+  charityAmount        Decimal            @db.Decimal(10, 2)
+  prizePoolAmount      Decimal            @db.Decimal(10, 2)
+  startDate            DateTime           @default(now())
+  endDate              DateTime?
+  stripeCustomerId     String?
+  stripeSubscriptionId String?            @unique
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  charitySelection     CharitySelection?
+  payments             Payment[]
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+}
+
+model GolfScore {
+  id        String    @id @default(uuid())
+  userId    String
+  score     Int
+  playedAt  DateTime
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, playedAt])
+  @@index([userId, playedAt])
+}
+
+model Charity {
+  id          String             @id @default(uuid())
+  name        String
+  description String
+  logoUrl     String?
+  websiteUrl  String?
+  isActive    Boolean            @default(true)
+  isFeatured  Boolean            @default(false)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  selections  CharitySelection[]
+
+  @@index([name])
+  @@index([isActive])
+}
+
+model CharitySelection {
+  id                  String       @id @default(uuid())
+  userId              String
+  charityId           String
+  subscriptionId      String       @unique
+  contributionPercent Int          @default(10)
+  contributionAmount  Decimal      @db.Decimal(10, 2)
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+  charity             Charity      @relation(fields: [charityId], references: [id], onDelete: Cascade)
+  subscription        Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  user                User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([charityId])
+}
+
+model Draw {
+  id             String      @id @default(uuid())
+  month          Int
+  year           Int
+  status         DrawStatus  @default(DRAFT)
+  winningNumbers Int[]
+  prizePool      Decimal     @db.Decimal(10, 2)
+  jackpot        Decimal     @db.Decimal(10, 2)
+  simulatedAt    DateTime?
+  publishedAt    DateTime?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  entries        DrawEntry[]
+  prizes         DrawPrize[]
+  winners        Winner[]
+
+  @@unique([month, year])
+  @@index([status])
+}
+
+model DrawEntry {
+  id        String   @id @default(uuid())
+  drawId    String
+  userId    String
+  numbers   Int[]
+  createdAt DateTime @default(now())
+  draw      Draw     @relation(fields: [drawId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([drawId, userId])
+  @@index([drawId])
+  @@index([userId])
+}
+
+model DrawPrize {
+  id         String    @id @default(uuid())
+  drawId     String
+  matchType  MatchType
+  percentage Int
+  amount     Decimal   @db.Decimal(10, 2)
+  draw       Draw      @relation(fields: [drawId], references: [id], onDelete: Cascade)
+
+  @@unique([drawId, matchType])
+}
+
+model Winner {
+  id              String       @id @default(uuid())
+  drawId          String
+  userId          String
+  matchType       MatchType
+  matchedNumbers  Int
+  prizeAmount     Decimal      @db.Decimal(10, 2)
+  status          WinnerStatus @default(PENDING)
+  proofUrl        String?
+  rejectionReason String?
+  verifiedAt      DateTime?
+  paidAt          DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  payment         Payment?
+  draw            Draw         @relation(fields: [drawId], references: [id], onDelete: Cascade)
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([drawId])
+  @@index([userId])
+  @@index([status])
+}
+
+model Payment {
+  id              String        @id @default(uuid())
+  userId          String
+  subscriptionId  String?
+  winnerId        String?       @unique
+  amount          Decimal       @db.Decimal(10, 2)
+  status          PaymentStatus @default(PENDING)
+  stripePaymentId String?
+  stripeInvoiceId String?
+  paidAt          DateTime?
+  createdAt       DateTime      @default(now())
+  subscription    Subscription? @relation(fields: [subscriptionId], references: [id])
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  winner          Winner?       @relation(fields: [winnerId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum SubscriptionPlan {
+  MONTHLY
+  YEARLY
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  EXPIRED
+  PAST_DUE
+}
+
+enum DrawStatus {
+  DRAFT
+  SIMULATED
+  PUBLISHED
+  COMPLETED
+}
+
+enum MatchType {
+  THREE
+  FOUR
+  FIVE
+}
+
+enum WinnerStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  PAID
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+}
