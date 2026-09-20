@@ -18,22 +18,33 @@ import errorHandler from "./middleware/errorHandler";
 
 const app = express();
 
-const allowedOrigins = [
-  "https://digital-heroes-rouge.vercel.app",
-  "http://localhost:5173"
-];
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
 
-app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-      return;
-    }
+  if (
+    origin === "https://digital-heroes-rouge.vercel.app" ||
+    origin === "http://localhost:5173"
+  ) {
+    res.header("Access-Control-Allow-Origin", origin);
+    res.header("Access-Control-Allow-Credentials", "true");
+  }
 
-    callback(new Error("Not allowed by CORS"));
-  },
-  credentials: true
-}));
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+  );
+
+  res.header(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+  );
+
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204);
+  }
+
+  next();
+});
 
 app.use(cookieParser());
 
