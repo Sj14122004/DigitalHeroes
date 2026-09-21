@@ -1,13 +1,12 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const Login = () => {
-  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ email: "", password: "" });
