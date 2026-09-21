@@ -27,4 +27,6 @@ router.get(
   wrapAsync(me)
 );
 
+router.post("/logout", logout);
+
 export default router;

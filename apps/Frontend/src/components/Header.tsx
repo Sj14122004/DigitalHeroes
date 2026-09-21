@@ -37,7 +37,7 @@ const Header = () => {
   };
 
   getUser();
-}, [location.pathname]);
+}, []);
 
   const logout = async () => {
     try {
