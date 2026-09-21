@@ -7,10 +7,10 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
-    "dev": "node --env-file=.env --import tsx src/server.ts",
-    "build": "tsc",
-    "start": "node dist/src/server.js"
-  },
+  "dev": "node --env-file=.env --import tsx src/server.ts",
+  "build": "prisma generate && tsc",
+  "start": "node dist/src/server.js"
+   },
   "keywords": [],
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.0",
