@@ -20,6 +20,7 @@ const app = express();
 const corsOptions = {
   origin: [
     "https://digital-heroes-rouge.vercel.app",
+    "https://digital-heroes-8rix22yvi-shivam-joshi-s-projects0019.vercel.app",
     "http://localhost:5173"
   ],
   credentials: true,
