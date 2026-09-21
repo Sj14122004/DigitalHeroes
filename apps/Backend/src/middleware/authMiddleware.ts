@@ -6,7 +6,13 @@ const authenticate = async (req: Request, res: Response, next: NextFunction) => 
   try {
     const token = req.cookies.token;
 
+    console.log("AUTH DEBUG:", {
+      hasToken: !!token,
+      cookies: Object.keys(req.cookies || {})
+    });
+
     if (!token) {
+      console.log("AUTH DEBUG: token missing");
       return res.status(401).send("Authentication required");
     }
 
@@ -14,6 +20,8 @@ const authenticate = async (req: Request, res: Response, next: NextFunction) => 
       id: string;
       role: "USER" | "ADMIN";
     };
+
+    console.log("AUTH DEBUG: JWT verified:", decoded.id);
 
     const user = await prisma.user.findUnique({
       where: { id: decoded.id },
@@ -26,12 +34,14 @@ const authenticate = async (req: Request, res: Response, next: NextFunction) => 
     });
 
     if (!user) {
+      console.log("AUTH DEBUG: user not found:", decoded.id);
       return res.status(401).send("User not found");
     }
 
     req.user = user;
     next();
   } catch (error) {
+    console.error("AUTH DEBUG ERROR:", error);
     next(error);
   }
 };
