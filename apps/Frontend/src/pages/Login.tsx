@@ -46,9 +46,9 @@ const Login = () => {
       toast.success("Login successful");
 
       if (data.user?.role === "ADMIN") {
-        navigate("/admin", { replace: true });
+        window.location.href = "/admin";
       } else {
-        navigate("/dashboard", { replace: true });
+        window.location.href = "/dashboard";
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Login failed");
