@@ -1,6 +1,6 @@
 import express from "express";
 import passport from "../config/passport";
-import { register, login, me } from "../controllers/authController";
+import { register, login, me, logout  } from "../controllers/authController";
 import wrapAsync from "../utils/wrapAsync";
 import validate from "../middleware/validateMiddleware";
 import { registerSchema, loginSchema } from "../validations/authValidation";
