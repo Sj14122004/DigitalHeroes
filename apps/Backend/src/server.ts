@@ -18,11 +18,20 @@ import errorHandler from "./middleware/errorHandler";
 const app = express();
 
 const corsOptions = {
-  origin: [
-    "https://digital-heroes-rouge.vercel.app",
-    "https://digital-heroes-8rix22yvi-shivam-joshi-s-projects0019.vercel.app",
-    "http://localhost:5173"
-  ],
+  origin: (origin: string | undefined, callback: (error: Error | null, allow?: boolean) => void) => {
+    if (!origin) return callback(null, true);
+
+    const allowed =
+      origin === "https://digital-heroes-rouge.vercel.app" ||
+      origin === "http://localhost:5173" ||
+      /^https:\/\/digital-heroes-[a-z0-9]+-shivam-joshi-s-projects0019\.vercel\.app$/.test(origin);
+
+    if (allowed) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
