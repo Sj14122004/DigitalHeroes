@@ -14,13 +14,19 @@ const AdminRoute = () => {
           credentials: "include"
         });
 
+        const data = await response.json().catch(() => null);
+
+        console.log("ADMIN AUTH:", {
+        status: response.status,
+        data
+        });
+
         if (!response.ok) {
-          setAuthorized(false);
-          return;
+        setAuthorized(false);
+        return;
         }
 
-        const user = await response.json();
-        setAuthorized(user.role === "ADMIN");
+        setAuthorized(data?.role === "ADMIN");
       } catch {
         setAuthorized(false);
       } finally {
