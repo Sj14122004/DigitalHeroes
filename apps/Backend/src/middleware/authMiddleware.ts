@@ -32,7 +32,7 @@ const authenticate = async (req: Request, res: Response, next: NextFunction) => 
         role: true
       }
     });
-
+    console.log("AUTH DEBUG USER:", user);
     if (!user) {
       console.log("AUTH DEBUG: user not found:", decoded.id);
       return res.status(401).send("User not found");
