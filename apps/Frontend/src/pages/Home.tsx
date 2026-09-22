@@ -5,7 +5,7 @@ const Home = () => {
   return (
     <div className="bg-[#f7f5ef] text-[#26352b]">
       <section className="relative overflow-hidden">
-        <div className="mx-auto grid min-h-[620px] max-w-7xl items-center gap-12 px-4 py-20 sm:px-6 lg:grid-cols-2 lg:px-8">
+        <div className="mx-auto grid min-h-155 max-w-7xl items-center gap-12 px-4 py-20 sm:px-6 lg:grid-cols-2 lg:px-8">
           <div>
             <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-[#edf4ed] px-4 py-2 text-sm font-semibold text-[#4f7c5a]">
               <Sparkles size={16} />

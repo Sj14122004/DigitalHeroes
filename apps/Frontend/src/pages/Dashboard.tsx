@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CalendarDays, CheckCircle2, Heart, ShieldCheck, Trophy } from "lucide-react";
+import { CalendarDays, Heart, ShieldCheck, Trophy } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 
