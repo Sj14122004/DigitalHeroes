@@ -70,10 +70,19 @@ const createCheckoutSession = async (
 };
 
 const handleWebhook = async (payload: Buffer, signature: string) => {
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  if (!webhookSecret) {
+    throw Object.assign(
+      new Error("STRIPE_WEBHOOK_SECRET is not configured"),
+      { statusCode: 500 }
+    );
+  }
+
   const event = stripe.webhooks.constructEvent(
     payload,
     signature,
-    process.env.STRIPE_WEBHOOK_SECRET!
+    webhookSecret
   );
 
   switch (event.type) {
@@ -84,7 +93,9 @@ const handleWebhook = async (payload: Buffer, signature: string) => {
         break;
       }
 
-      const userId = session.metadata?.userId || session.client_reference_id;
+      const userId =
+        session.metadata?.userId || session.client_reference_id;
+
       const plan = session.metadata?.plan as
         | "MONTHLY"
         | "YEARLY"
@@ -102,8 +113,7 @@ const handleWebhook = async (payload: Buffer, signature: string) => {
       const stripeSubscription =
         await stripe.subscriptions.retrieve(stripeSubscriptionId);
 
-      const amount =
-        (session.amount_total || 0) / 100;
+      const amount = (session.amount_total || 0) / 100;
 
       const charityPercent = Number(
         process.env.CHARITY_PERCENT || 10
@@ -168,35 +178,92 @@ const handleWebhook = async (payload: Buffer, signature: string) => {
       break;
     }
 
-    case "customer.subscription.updated": {
-    const subscription = event.data.object;
+    case "invoice.paid": {
+      const invoice = event.data.object;
 
-    const status =
-        subscription.status === "active" ||
-        subscription.status === "trialing"
-        ? "ACTIVE"
-        : subscription.status === "past_due"
-            ? "PAST_DUE"
-            : subscription.status === "canceled"
-            ? "CANCELLED"
-            : "EXPIRED";
+      const stripeSubscriptionId =
+        typeof invoice.parent?.subscription_details?.subscription === "string"
+          ? invoice.parent.subscription_details.subscription
+          : null;
 
-    const currentPeriodEnd =
-        subscription.items.data[0]?.current_period_end;
+      if (!stripeSubscriptionId) {
+        break;
+      }
 
-    await prisma.subscription.updateMany({
+      const existingSubscription =
+        await prisma.subscription.findUnique({
+          where: {
+            stripeSubscriptionId
+          }
+        });
+
+      if (existingSubscription) {
+        await prisma.subscription.update({
+          where: {
+            stripeSubscriptionId
+          },
+          data: {
+            status: "ACTIVE"
+          }
+        });
+      }
+
+      break;
+    }
+
+    case "invoice.payment_failed": {
+      const invoice = event.data.object;
+
+      const stripeSubscriptionId =
+        typeof invoice.parent?.subscription_details?.subscription === "string"
+          ? invoice.parent.subscription_details.subscription
+          : null;
+
+      if (!stripeSubscriptionId) {
+        break;
+      }
+
+      await prisma.subscription.updateMany({
         where: {
-        stripeSubscriptionId: subscription.id
+          stripeSubscriptionId
         },
         data: {
-        status,
-        endDate: currentPeriodEnd
+          status: "PAST_DUE"
+        }
+      });
+
+      break;
+    }
+
+    case "customer.subscription.updated": {
+      const subscription = event.data.object;
+
+      const status =
+        subscription.status === "active" ||
+        subscription.status === "trialing"
+          ? "ACTIVE"
+          : subscription.status === "past_due"
+            ? "PAST_DUE"
+            : subscription.status === "canceled"
+              ? "CANCELLED"
+              : "EXPIRED";
+
+      const currentPeriodEnd =
+        subscription.items.data[0]?.current_period_end;
+
+      await prisma.subscription.updateMany({
+        where: {
+          stripeSubscriptionId: subscription.id
+        },
+        data: {
+          status,
+          endDate: currentPeriodEnd
             ? new Date(currentPeriodEnd * 1000)
             : undefined
         }
-    });
+      });
 
-    break;
+      break;
     }
 
     case "customer.subscription.deleted": {
@@ -251,7 +318,8 @@ const cancelSubscription = async (userId: string) => {
   );
 
   return {
-    message: "Subscription will be cancelled at the end of the current period"
+    message:
+      "Subscription will be cancelled at the end of the current period"
   };
 };
 
