@@ -11,8 +11,14 @@ type User = {
   role: "USER" | "ADMIN";
 };
 
+type Subscription = {
+  status: "ACTIVE" | "CANCELLED" | "EXPIRED" | "PAST_DUE";
+};
+
 const Header = () => {
   const [user, setUser] = useState<User | null>(null);
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -33,11 +39,40 @@ const Header = () => {
       setUser(data);
     } catch {
       setUser(null);
+    } finally {
+      setAuthLoading(false);
     }
   };
 
   getUser();
-}, []);
+  },  []);
+
+  useEffect(() => {
+    if (!user || user.role === "ADMIN") {
+      setSubscription(null);
+      return;
+    }
+
+    const getSubscription = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/subscriptions`, {
+          credentials: "include"
+        });
+
+        if (!response.ok) {
+          setSubscription(null);
+          return;
+        }
+
+        const data = await response.json();
+        setSubscription(data);
+      } catch {
+        setSubscription(null);
+      }
+    };
+
+    getSubscription();
+  }, [user]);
 
   const logout = async () => {
     try {
@@ -47,6 +82,7 @@ const Header = () => {
       });
     } finally {
       setUser(null);
+      setSubscription(null);
       setMenuOpen(false);
       navigate("/login");
     }
@@ -56,6 +92,11 @@ const Header = () => {
     location.pathname === path
       ? "text-[#4f7c5a]"
       : "text-[#536158] hover:text-[#4f7c5a]";
+
+  const isSubscribed =
+    user?.role === "ADMIN" || subscription?.status === "ACTIVE";
+
+  const closeMenu = () => setMenuOpen(false);
 
   return (
     <header className="sticky top-0 z-50 border-b border-[#e8e5dc] bg-[#f7f5ef]/95 backdrop-blur">
@@ -71,7 +112,9 @@ const Header = () => {
         </Link>
 
         <nav className="hidden items-center gap-7 md:flex">
-          {!user ? (
+          {authLoading ? (
+            <div className="h-5 w-20 animate-pulse rounded bg-[#e8e5dc]" />
+          ) : !user ? (
             <>
               <Link to="/" className={isActive("/")}>
                 Home
@@ -105,28 +148,47 @@ const Header = () => {
                 Dashboard
               </Link>
 
-              <Link to="/scores" className={isActive("/scores")}>
-                Scores
-              </Link>
+              {isSubscribed && (
+                <>
+                  <Link to="/scores" className={isActive("/scores")}>
+                    Scores
+                  </Link>
 
-              <Link to="/charity" className={isActive("/charity")}>
-                Charity
-              </Link>
+                  <Link to="/charity" className={isActive("/charity")}>
+                    Charity
+                  </Link>
 
-              <Link to="/draw" className={isActive("/draw")}>
-                Draw
-              </Link>
+                  <Link to="/draw" className={isActive("/draw")}>
+                    Draw
+                  </Link>
 
-              <Link to="/winnings" className={isActive("/winnings")}>
-                Winnings
-              </Link>
+                  <Link to="/winnings" className={isActive("/winnings")}>
+                    Winnings
+                  </Link>
 
-              <Link
-                to="/subscription/status"
-                className={isActive("/subscription/status")}
-              >
-                Subscription
-              </Link>
+                  <Link
+                    to="/subscription/status"
+                    className={isActive("/subscription/status")}
+                  >
+                    Subscription
+                  </Link>
+                </>
+              )}
+
+              {!isSubscribed && (
+                <>
+                  <Link to="/charity" className={isActive("/charity")}>
+                    Charity
+                  </Link>
+
+                  <Link
+                    to="/subscription"
+                    className={`rounded-xl bg-[#4f7c5a] px-4 py-2 font-medium text-white transition hover:bg-[#416b4b]`}
+                  >
+                    Subscribe
+                  </Link>
+                </>
+              )}
 
               <button
                 type="button"
@@ -149,14 +211,14 @@ const Header = () => {
         </button>
       </div>
 
-      {menuOpen && (
+      {menuOpen && !authLoading && (
         <div className="border-t border-[#e8e5dc] bg-[#f7f5ef] px-4 py-4 md:hidden">
           <nav className="flex flex-col gap-1">
             {!user ? (
               <>
                 <Link
                   to="/"
-                  onClick={() => setMenuOpen(false)}
+                  onClick={closeMenu}
                   className="rounded-lg px-3 py-3 text-[#536158]"
                 >
                   Home
@@ -164,7 +226,7 @@ const Header = () => {
 
                 <Link
                   to="/charity"
-                  onClick={() => setMenuOpen(false)}
+                  onClick={closeMenu}
                   className="rounded-lg px-3 py-3 text-[#536158]"
                 >
                   Charity
@@ -172,7 +234,7 @@ const Header = () => {
 
                 <Link
                   to="/draw"
-                  onClick={() => setMenuOpen(false)}
+                  onClick={closeMenu}
                   className="rounded-lg px-3 py-3 text-[#536158]"
                 >
                   Monthly Draw
@@ -180,7 +242,7 @@ const Header = () => {
 
                 <Link
                   to="/login"
-                  onClick={() => setMenuOpen(false)}
+                  onClick={closeMenu}
                   className="rounded-lg px-3 py-3 text-[#536158]"
                 >
                   Login
@@ -188,7 +250,7 @@ const Header = () => {
 
                 <Link
                   to="/register"
-                  onClick={() => setMenuOpen(false)}
+                  onClick={closeMenu}
                   className="mt-2 rounded-xl bg-[#4f7c5a] px-4 py-3 text-center font-semibold text-white"
                 >
                   Join Now
@@ -198,51 +260,73 @@ const Header = () => {
               <>
                 <Link
                   to="/dashboard"
-                  onClick={() => setMenuOpen(false)}
+                  onClick={closeMenu}
                   className="rounded-lg px-3 py-3 text-[#536158]"
                 >
                   Dashboard
                 </Link>
 
-                <Link
-                  to="/scores"
-                  onClick={() => setMenuOpen(false)}
-                  className="rounded-lg px-3 py-3 text-[#536158]"
-                >
-                  Scores
-                </Link>
+                {isSubscribed ? (
+                  <>
+                    <Link
+                      to="/scores"
+                      onClick={closeMenu}
+                      className="rounded-lg px-3 py-3 text-[#536158]"
+                    >
+                      Scores
+                    </Link>
 
-                <Link
-                  to="/charity"
-                  onClick={() => setMenuOpen(false)}
-                  className="rounded-lg px-3 py-3 text-[#536158]"
-                >
-                  Charity
-                </Link>
+                    <Link
+                      to="/charity"
+                      onClick={closeMenu}
+                      className="rounded-lg px-3 py-3 text-[#536158]"
+                    >
+                      Charity
+                    </Link>
 
-                <Link
-                  to="/draw"
-                  onClick={() => setMenuOpen(false)}
-                  className="rounded-lg px-3 py-3 text-[#536158]"
-                >
-                  Draw
-                </Link>
+                    <Link
+                      to="/draw"
+                      onClick={closeMenu}
+                      className="rounded-lg px-3 py-3 text-[#536158]"
+                    >
+                      Draw
+                    </Link>
 
-                <Link
-                  to="/winnings"
-                  onClick={() => setMenuOpen(false)}
-                  className="rounded-lg px-3 py-3 text-[#536158]"
-                >
-                  Winnings
-                </Link>
+                    <Link
+                      to="/winnings"
+                      onClick={closeMenu}
+                      className="rounded-lg px-3 py-3 text-[#536158]"
+                    >
+                      Winnings
+                    </Link>
 
-                <Link
-                  to="/subscription/status"
-                  onClick={() => setMenuOpen(false)}
-                  className="rounded-lg px-3 py-3 text-[#536158]"
-                >
-                  Subscription
-                </Link>
+                    <Link
+                      to="/subscription/status"
+                      onClick={closeMenu}
+                      className="rounded-lg px-3 py-3 text-[#536158]"
+                    >
+                      Subscription
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      to="/charity"
+                      onClick={closeMenu}
+                      className="rounded-lg px-3 py-3 text-[#536158]"
+                    >
+                      Charity
+                    </Link>
+
+                    <Link
+                      to="/subscription"
+                      onClick={closeMenu}
+                      className="mt-2 rounded-xl bg-[#4f7c5a] px-4 py-3 text-center font-semibold text-white"
+                    >
+                      Subscribe
+                    </Link>
+                  </>
+                )}
 
                 <button
                   type="button"

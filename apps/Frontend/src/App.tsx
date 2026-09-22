@@ -30,19 +30,26 @@ const App = () => {
           <Route path="/" element={<Home />} />
           <Route path="/charity" element={<Charity />} />
           <Route path="/draw" element={<Draw />} />
-          <Route path="/subscription/success" element={<SubscriptionSuccess />} />
-          <Route path="/subscription/cancel" element={<SubscriptionCancel />} />
-        </Route>
+          <Route
+            path="/subscription/success"
+            element={<SubscriptionSuccess />}
+          />
+          <Route
+            path="/subscription/cancel"
+            element={<SubscriptionCancel />}
+          />
 
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
 
-        <Route element={<ProtectedRoute />}>
-          <Route element={<Layout />}>
+          <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/scores" element={<Scores />} />
             <Route path="/subscription" element={<Subscription />} />
-            <Route path="/subscription/status" element={<SubscriptionStatus />} />
+            <Route
+              path="/subscription/status"
+              element={<SubscriptionStatus />}
+            />
             <Route path="/winnings" element={<Winnings />} />
           </Route>
         </Route>
