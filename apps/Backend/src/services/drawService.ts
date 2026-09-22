@@ -10,17 +10,55 @@ const getMonthRange = () => {
 const getCurrentDraw = async () => {
   const { month, year } = getMonthRange();
 
-  return prisma.draw.findUnique({
-    where: { month_year: { month, year } },
+  let draw = await prisma.draw.findUnique({
+    where: {
+      month_year: {
+        month,
+        year
+      }
+    },
     include: {
       prizes: true,
       winners: {
         include: {
-          user: { select: { id: true, name: true } }
+          user: {
+            select: {
+              id: true,
+              name: true
+            }
+          }
         }
       }
     }
   });
+
+  if (!draw) {
+    draw = await prisma.draw.create({
+      data: {
+        month,
+        year,
+        status: "DRAFT",
+        winningNumbers: [],
+        prizePool: 0,
+        jackpot: 0
+      },
+      include: {
+        prizes: true,
+        winners: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  return draw;
 };
 
 const getMyEntry = async (userId: string) => {
@@ -98,14 +136,19 @@ const enterDraw = async (userId: string, numbers: number[]) => {
   });
 };
 
+// const generateWinningNumbers = () => {
+//   const numbers = new Set<number>();
+
+//   while (numbers.size < 5) {
+//     numbers.add(Math.floor(Math.random() * 45) + 1);
+//   }
+
+//   return [...numbers].sort((a, b) => a - b);
+// };
+
+// for checking 
 const generateWinningNumbers = () => {
-  const numbers = new Set<number>();
-
-  while (numbers.size < 5) {
-    numbers.add(Math.floor(Math.random() * 45) + 1);
-  }
-
-  return [...numbers].sort((a, b) => a - b);
+  return [6, 8, 15, 17, 40];
 };
 
 const getMatchCount = (numbers: number[], winningNumbers: number[]) =>

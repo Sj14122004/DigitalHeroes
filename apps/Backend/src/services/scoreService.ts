@@ -23,6 +23,14 @@ const createScore = async (
     );
   }
 
+  const newScore = await prisma.golfScore.create({
+    data: {
+      userId,
+      score,
+      playedAt: date
+    }
+  });
+
   const scores = await prisma.golfScore.findMany({
     where: {
       userId
@@ -32,21 +40,19 @@ const createScore = async (
     }
   });
 
-  if (scores.length >= 5) {
-    await prisma.golfScore.delete({
+  if (scores.length > 5) {
+    const scoresToDelete = scores.slice(5);
+
+    await prisma.golfScore.deleteMany({
       where: {
-        id: scores[scores.length - 1].id
+        id: {
+          in: scoresToDelete.map((item) => item.id)
+        }
       }
     });
   }
 
-  return prisma.golfScore.create({
-    data: {
-      userId,
-      score,
-      playedAt: date
-    }
-  });
+  return newScore;
 };
 
 const getScores = async (userId: string) => {

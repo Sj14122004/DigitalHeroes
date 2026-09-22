@@ -35,7 +35,9 @@ const Draw = () => {
   const loadDraw = async () => {
     try {
       const [drawResponse, entryResponse] = await Promise.all([
-        fetch(`${API_URL}/api/draws/current`),
+        fetch(`${API_URL}/api/draws/current`, {
+          credentials: "include"
+        }),
         fetch(`${API_URL}/api/draws/my-entry`, {
           credentials: "include"
         })
@@ -70,62 +72,73 @@ const Draw = () => {
   }, []);
 
   const toggleNumber = (number: number) => {
-    if (entry) return;
+  if (entry || draw?.status !== "DRAFT") return;
 
-    setSelectedNumbers((current) => {
-      if (current.includes(number)) {
-        return current.filter((item) => item !== number);
-      }
+  setSelectedNumbers((current) => {
+    if (current.includes(number)) {
+      return current.filter((item) => item !== number);
+    }
 
-      if (current.length >= 5) {
-        toast.error("You can select exactly 5 numbers");
-        return current;
-      }
+    if (current.length >= 5) {
+      toast.error("You can select exactly 5 numbers");
+      return current;
+    }
 
-      return [...current, number].sort((a, b) => a - b);
-    });
-  };
+    return [...current, number].sort((a, b) => a - b);
+  });
+};
 
   const submitEntry = async () => {
-    if (selectedNumbers.length !== 5) {
-      toast.error("Select exactly 5 numbers");
-      return;
-    }
+  if (draw?.status !== "DRAFT") {
+    toast.error("Draw entry is closed");
+    return;
+  }
 
-    setSubmitting(true);
+  if (entry) {
+    toast.error("You have already entered this draw");
+    return;
+  }
 
-    try {
-      const response = await fetch(`${API_URL}/api/draws/entry`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          numbers: selectedNumbers
-        })
-      });
+  if (selectedNumbers.length !== 5) {
+    toast.error("Select exactly 5 numbers");
+    return;
+  }
 
-      const data = await response.json().catch(() => null);
+  setSubmitting(true);
 
-      if (!response.ok) {
-        throw new Error(
-          typeof data === "string"
-            ? data
-            : data?.message || "Unable to enter draw"
-        );
-      }
+  try {
+    const response = await fetch(`${API_URL}/api/draws/entry`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      credentials: "include",
+      body: JSON.stringify({
+        numbers: selectedNumbers
+      })
+    });
 
-      setEntry(data);
-      toast.success("Your draw entry has been saved");
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Unable to enter draw"
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      throw new Error(
+        typeof data === "string"
+          ? data
+          : data?.message || "Unable to enter draw"
       );
-    } finally {
-      setSubmitting(false);
     }
-  };
+
+    setEntry(data);
+    setSelectedNumbers(data.numbers);
+    toast.success("Your draw entry has been saved");
+  } catch (error) {
+    toast.error(
+      error instanceof Error ? error.message : "Unable to enter draw"
+    );
+  } finally {
+    setSubmitting(false);
+  }
+ };
 
   const getMonthName = () => {
     if (!draw) return new Date().toLocaleString("en-IN", { month: "long" });
@@ -232,7 +245,7 @@ const Draw = () => {
                       <button
                         key={number}
                         type="button"
-                        disabled={!!entry}
+                        disabled={!!entry || draw.status !== "DRAFT"}
                         onClick={() => toggleNumber(number)}
                         className={`relative flex aspect-square items-center justify-center rounded-xl text-sm font-semibold transition ${
                           winning
@@ -240,7 +253,7 @@ const Draw = () => {
                             : selected
                               ? "bg-[#dcebdd] text-[#365b40] ring-2 ring-[#6c9575]"
                               : "bg-[#f7f5ef] text-[#536158] hover:bg-[#edf4ed]"
-                        } ${entry ? "cursor-default" : ""}`}
+                        } ${entry || draw.status !== "DRAFT" ? "cursor-default" : ""}`}
                       >
                         {number}
 
@@ -256,7 +269,7 @@ const Draw = () => {
                 )}
               </div>
 
-              {!entry && (
+              {!entry && draw.status === "DRAFT" && (
                 <button
                   type="button"
                   onClick={submitEntry}

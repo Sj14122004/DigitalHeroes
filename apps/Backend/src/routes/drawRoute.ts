@@ -1,8 +1,8 @@
 import express from "express";
 import authenticate from "../middleware/authMiddleware";
 import authorize from "../middleware/roleMiddleware";
-import validate from "../middleware/validateMiddleware";
 import wrapAsync from "../utils/wrapAsync";
+import validate from "../middleware/validateMiddleware";
 import { drawEntrySchema } from "../validations/drawValidation";
 import {
   current,
@@ -14,14 +14,11 @@ import {
 
 const router = express.Router();
 
-router.get("/current", wrapAsync(current));
+router.get("/current", authenticate, wrapAsync(current));
+router.get("/my-entry", authenticate, wrapAsync(myEntry));
+router.post("/entry", authenticate, validate(drawEntrySchema), wrapAsync(enter));
 
-router.use(authenticate);
-
-router.get("/my-entry", wrapAsync(myEntry));
-router.post("/entry", validate(drawEntrySchema), wrapAsync(enter));
-
-router.post("/simulate", authorize("ADMIN"), wrapAsync(simulate));
-router.post("/publish", authorize("ADMIN"), wrapAsync(publish));
+router.post("/simulate", authenticate, authorize("ADMIN"), wrapAsync(simulate));
+router.post("/publish", authenticate, authorize("ADMIN"), wrapAsync(publish));
 
 export default router;

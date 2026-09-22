@@ -2,6 +2,24 @@ Digital Heroes
 
 Golf subscription platform with monthly prize draws & charity giving.
 
+
+Winner Testing
+
+For testing the 5-match winner flow, the random winning-number generator was temporarily changed in:
+
+apps/Backend/src/services/drawService.ts
+
+const generateWinningNumbers = () => {
+  return [6, 8, 15, 17, 40];
+};
+
+The subscriber entered the same numbers:
+
+6, 8, 15, 17, 40
+
+This was used to verify the complete 5-match → winner → proof verification → payout flow. The original random number generation should be restored for production.
+
+
 Test Credentials
 Admin
 Email: admin@digitalheroes.com

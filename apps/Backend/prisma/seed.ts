@@ -120,33 +120,11 @@ const main = async () => {
     }
   });
 
-  const scores = [
-    { score: 32, daysAgo: 1 },
-    { score: 36, daysAgo: 3 },
-    { score: 29, daysAgo: 6 },
-    { score: 40, daysAgo: 9 },
-    { score: 34, daysAgo: 12 }
-  ];
-
-  for (const item of scores) {
-    const playedAt = new Date();
-    playedAt.setDate(playedAt.getDate() - item.daysAgo);
-    playedAt.setHours(10, 0, 0, 0);
-
-    await prisma.golfScore.create({
-      data: {
-        userId: user.id,
-        score: item.score,
-        playedAt
-      }
-    });
-  }
-
   const now = new Date();
   const month = now.getMonth() + 1;
   const year = now.getFullYear();
 
-  const draw = await prisma.draw.create({
+  await prisma.draw.create({
     data: {
       month,
       year,
@@ -154,14 +132,6 @@ const main = async () => {
       winningNumbers: [],
       prizePool: 0,
       jackpot: 0
-    }
-  });
-
-  await prisma.drawEntry.create({
-    data: {
-      drawId: draw.id,
-      userId: user.id,
-      numbers: [5, 12, 19, 27, 41]
     }
   });
 
@@ -174,8 +144,9 @@ const main = async () => {
   console.log("Subscription: ACTIVE - MONTHLY - ₹499");
   console.log("Charity: 10% - ₹49.90");
   console.log("Prize Pool: ₹399.20");
-  console.log("Scores: 5");
-  console.log("Draw Entry: Created");
+  console.log("Golf Scores: None");
+  console.log("Draw Entry: None");
+  console.log("Draw Status: DRAFT");
   console.log("======================================");
 };
 

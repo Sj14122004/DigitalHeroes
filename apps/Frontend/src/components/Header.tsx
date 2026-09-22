@@ -124,10 +124,6 @@ const Header = () => {
                 Charity
               </Link>
 
-              <Link to="/draw" className={isActive("/draw")}>
-                Monthly Draw
-              </Link>
-
               <Link
                 to="/login"
                 className="font-medium text-[#536158] hover:text-[#4f7c5a]"
@@ -230,14 +226,6 @@ const Header = () => {
                   className="rounded-lg px-3 py-3 text-[#536158]"
                 >
                   Charity
-                </Link>
-
-                <Link
-                  to="/draw"
-                  onClick={closeMenu}
-                  className="rounded-lg px-3 py-3 text-[#536158]"
-                >
-                  Monthly Draw
                 </Link>
 
                 <Link

@@ -37,7 +37,9 @@ const Dashboard = () => {
         await Promise.all([
           fetch(`${API_URL}/api/scores`, { credentials: "include" }),
           fetch(`${API_URL}/api/subscriptions`, { credentials: "include" }),
-          fetch(`${API_URL}/api/draws/current`)
+          fetch(`${API_URL}/api/draws/my-entry`, {
+          credentials: "include"
+        })
         ]);
 
       if (scoresResponse.ok) {
