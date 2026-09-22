@@ -206,9 +206,9 @@ const simulateDraw = async () => {
   const winners5 = matches.filter((item) => item.matchedNumbers === 5);
 
   const previousJackpot = Number(draw.jackpot);
-  const fivePrize = prizePool * 0.25 + previousJackpot;
+  const fivePrize = prizePool * 0.4 + previousJackpot;
   const fourPrize = prizePool * 0.35;
-  const threePrize = prizePool * 0.4;
+  const threePrize = prizePool * 0.25;
 
   const jackpot = winners5.length === 0 ? fivePrize : 0;
 
@@ -233,27 +233,27 @@ const simulateDraw = async () => {
     });
 
     await tx.drawPrize.createMany({
-      data: [
-        {
-          drawId: draw!.id,
-          matchType: "THREE",
-          percentage: 40,
-          amount: threePrize
-        },
-        {
-          drawId: draw!.id,
-          matchType: "FOUR",
-          percentage: 35,
-          amount: fourPrize
-        },
-        {
-          drawId: draw!.id,
-          matchType: "FIVE",
-          percentage: 25,
-          amount: fivePrize
-        }
-      ]
-    });
+  data: [
+    {
+      drawId: draw!.id,
+      matchType: "THREE",
+      percentage: 25,
+      amount: threePrize
+    },
+    {
+      drawId: draw!.id,
+      matchType: "FOUR",
+      percentage: 35,
+      amount: fourPrize
+    },
+    {
+      drawId: draw!.id,
+      matchType: "FIVE",
+      percentage: 40,
+      amount: fivePrize
+    }
+   ]
+  });
 
     if (winners3.length > 0) {
       const amount = threePrize / winners3.length;
